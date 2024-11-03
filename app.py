@@ -168,5 +168,6 @@ def uv_plot():
     uv_plot_img = create_uv_index_plot(sunrise, sunset, peak_uvi)
     return send_file(uv_plot_img, mimetype='image/png')
 
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -2,21 +2,27 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clima y Pronóstico UV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Información del Clima y Pronóstico UV</h1>
+    <header>
+        <nav>
+            <h1>Clima y Pronóstico UV</h1>
+        </nav>
+    </header>
 
     <form method="POST" action="/">
         <label for="city">Introduce tu ciudad:</label>
         <input type="text" id="city" name="city" placeholder="Ejemplo: Madrid" required>
-        <button type="submit">Buscar</button>
+        <button type="submit" class="btn-submit">Buscar</button>
     </form>
 
     {% if error %}
         <div class="container error">
-            <p style="color: red;">{{ error }}</p>
+            <p>{{ error }}</p>
         </div>
     {% endif %}
 
@@ -38,6 +44,8 @@
             <p>Visibilidad: {{ weather_data['visibility'] / 1000 }} km</p>
             {% if 'rain' in weather_data %}
                 <p>Lluvia en la última hora: {{ weather_data['rain'].get('1h', 0) }} mm</p>
+            {% else %}
+                <p>No se ha registrado lluvia en la última hora.</p>
             {% endif %}
             <p>Nubes: {{ weather_data['clouds']['all'] }}%</p>
             <p>Amanecer: {{ sunrise.strftime('%H:%M:%S') }}</p>
@@ -56,7 +64,7 @@
     {% else %}
         <p>No se pudo obtener el índice UV actual.</p>
     {% endif %}
-
+    
     {% if uvi_forecast %}
         <div class="container uvi-forecast">
             <h2>Pronóstico de Índice UV</h2>
@@ -69,5 +77,9 @@
     {% else %}
         <p>No se pudo obtener el pronóstico del índice UV.</p>
     {% endif %}
+
+    <footer>
+        <p>Datos proporcionados por OpenWeatherMap. Desarrollado por WEQREA.</p>
+    </footer>
 </body>
 </html>
