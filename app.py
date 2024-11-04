@@ -6,7 +6,7 @@ import requests
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import pytz
 from timezonefinder import TimezoneFinder  # Añadido para obtener la zona horaria precisa
@@ -27,7 +27,6 @@ def get_coordinates(city_name):
     if response.status_code == 200 and data:
         lat = data[0]['lat']
         lon = data[0]['lon']
-        # Obtener la zona horaria a partir de las coordenadas
         timezone = tf.timezone_at(lat=lat, lng=lon)
         return lat, lon, timezone, data[0]
     print(f"Error al obtener coordenadas: {response.status_code} {response.text}")
@@ -72,19 +71,14 @@ def convert_to_local_time(timestamp, timezone):
 
 # Función para generar la gráfica de UV
 def create_uv_index_plot(sunrise, sunset, peak_uvi):
-    # Calcular el mediodía en la zona horaria local
     midday_timestamp = (sunrise.timestamp() + sunset.timestamp()) / 2
-    midday = datetime.fromtimestamp(midday_timestamp, sunrise.tzinfo)  # Mantener la zona horaria local
+    midday = datetime.fromtimestamp(midday_timestamp, sunrise.tzinfo)
 
-    # Desviación estándar para el modelo de distribución UV
     std_dev = (sunset - sunrise).total_seconds() / 5
-
-    # Generar los valores de UV y los tiempos para el eje x en la zona horaria local
     timestamps = np.linspace(sunrise.timestamp(), sunset.timestamp(), 100)
     uv_values = peak_uvi * np.exp(-0.5 * ((timestamps - midday_timestamp) / std_dev) ** 2)
     times_dt = [datetime.fromtimestamp(t, sunrise.tzinfo) for t in timestamps]
 
-    # Crear la gráfica
     plt.figure(figsize=(8, 4))
     plt.plot(times_dt, uv_values, label="Índice UV")
     plt.xlabel("Hora del día")
@@ -93,12 +87,10 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     plt.legend()
     plt.grid()
 
-    # Configurar el formato de la fecha en el eje x
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=sunrise.tzinfo))
     plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
     plt.gcf().autofmt_xdate()
 
-    # Guardar la imagen en un buffer
     img = BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
@@ -129,6 +121,35 @@ def index():
     peak_uvi = current_uvi['value'] if current_uvi else 0
     uv_plot = create_uv_index_plot(sunrise, sunset, peak_uvi)
 
+    dosis_uv = None
+    hora_inicio = request.form.get('hora_inicio')
+    hora_fin = request.form.get('hora_fin')
+
+    if hora_inicio and hora_fin:
+        formato_hora = '%H:%M'
+        try:
+            inicio_exposicion = datetime.strptime(hora_inicio, formato_hora).replace(
+                year=sunrise.year, month=sunrise.month, day=sunrise.day, tzinfo=sunrise.tzinfo
+            )
+            fin_exposicion = datetime.strptime(hora_fin, formato_hora).replace(
+                year=sunset.year, month=sunset.month, day=sunset.day, tzinfo=sunset.tzinfo
+            )
+
+            if inicio_exposicion >= sunrise and fin_exposicion <= sunset and inicio_exposicion < fin_exposicion:
+                std_dev = (sunset - sunrise).total_seconds() / 5
+                midday_timestamp = (sunrise.timestamp() + sunset.timestamp()) / 2
+
+                timestamps = np.linspace(inicio_exposicion.timestamp(), fin_exposicion.timestamp(), 100)
+                uv_values = peak_uvi * np.exp(-0.5 * ((timestamps - midday_timestamp) / std_dev) ** 2)
+                total_uv_dosis = np.trapz(uv_values, timestamps)
+
+                dosis_uv = round(total_uv_dosis, 2)
+            else:
+                dosis_uv = "Las horas deben estar entre el amanecer y el anochecer, y la hora de inicio debe ser anterior a la de fin."
+
+        except ValueError as e:
+            dosis_uv = f"Formato de hora inválido: {e}"
+
     return render_template(
         'index.html',
         weather_data=weather_data,
@@ -138,7 +159,10 @@ def index():
         city_name=city_name,
         sunrise=sunrise,
         sunset=sunset,
-        city_info=city_info  # Pasar información de la ciudad a la plantilla
+        city_info=city_info,
+        dosis_uv=dosis_uv,
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin
     )
 
 @app.route('/uv_plot')
@@ -167,7 +191,6 @@ def uv_plot():
 
     uv_plot_img = create_uv_index_plot(sunrise, sunset, peak_uvi)
     return send_file(uv_plot_img, mimetype='image/png')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

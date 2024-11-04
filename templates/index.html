@@ -61,6 +61,32 @@
             <p>Valor: {{ current_uvi['value'] }}</p>
             <img src="{{ uv_plot_url }}?city={{ city_name }}" alt="Gráfica de Índice UV para {{ city_name }}">
         </div>
+        <div class="container uv-calculator">
+            <h2>Calculadora de Bronceado (Dosis UV)</h2>
+            <form method="POST" action="/">
+                <input type="hidden" name="city" value="{{ city_name }}"> <!-- Mantener la ciudad actual -->
+                
+                <label for="hora_inicio">Hora de inicio (HH:MM):</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" required>
+                <br>
+                <br>
+
+                <label for="hora_fin">Hora de fin (HH:MM):</label>
+                <input type="time" id="hora_fin" name="hora_fin" required>
+                <br>
+                <br>
+                <button type="submit" class="btn-submit">Calcular Dosis UV</button>
+            </form>
+    
+            {% if dosis_uv %}
+                <div class="result">
+                    <h3>Resultado de la Dosis UV</h3>
+                    <p>Dosis total recibida: {{ dosis_uv }} mJ/cm²</p>
+                    <p>Desde: {{ hora_inicio }}</p>
+                    <p>Hasta: {{ hora_fin }}</p>
+                </div>
+            {% endif %}
+        </div>
     {% else %}
         <p>No se pudo obtener el índice UV actual.</p>
     {% endif %}

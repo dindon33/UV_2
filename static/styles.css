@@ -74,8 +74,13 @@ form input[type="text"]:focus {
 }
 
 /* Estilo para el contenedor de pronóstico UV */
-.uvi-forecast {
+.uv-calculator {
     border-left: 5px solid #FFC107; /* Cambiado a un amarillo cálido */
+}
+
+/* Estilo para el contenedor de pronóstico UV */
+.uvi-forecast {
+    border-left: 5px solid #FF5722; /* Cambiado a un amarillo cálido */
 }
 
 /* Estilos para el formulario */
