@@ -16,7 +16,7 @@
 
     <form method="POST" action="/">
         <label for="city">Introduce tu ciudad:</label>
-        <input type="text" id="city" name="city" placeholder="Ejemplo: Madrid" required>
+        <input type="text" id="city" name="city" placeholder="Ciudad, Estado/Región, País" required>
         <button type="submit" class="btn-submit">Buscar</button>
     </form>
 
@@ -26,17 +26,45 @@
         </div>
     {% endif %}
 
+    {% if locations %}
+        <div class="container locations-info">
+            <h2>Resultados para "{{ city_name }}":</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre Localidad</th>
+                        <th>Estado/Región</th>
+                        <th>País</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for location in locations %}
+                    <tr>
+                        <td>{{ location.name }}</td>
+                        <td>{{ location.state }}</td>
+                        <td>{{ location.country }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
     {% if weather_data %}
         <div class="container weather-info">
-            <h2>Información de {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</h2>
+            <h2>Información para:</h2>
+            <h2>{{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</h2>
             <p>Latitud: {{ city_info.lat }}</p>
             <p>Longitud: {{ city_info.lon }}</p>
+            <hr>
             <p>Descripción: {{ weather_data['weather'][0]['description'] }}</p>
             <p>Icono: <img src="http://openweathermap.org/img/wn/{{ weather_data['weather'][0]['icon'] }}@2x.png" alt="Icono del clima: {{ weather_data['weather'][0]['description'] }}"></p>
+            <hr>
             <p>Temperatura: {{ weather_data['main']['temp'] }}°C</p>
             <p>Máxima: {{ weather_data['main']['temp_max'] }}°C</p>
             <p>Mínima: {{ weather_data['main']['temp_min'] }}°C</p>
             <p>Sensación térmica: {{ weather_data['main']['feels_like'] }}°C</p>
+            <hr>
             <p>Humedad: {{ weather_data['main']['humidity'] }}%</p>
             <p>Viento: {{ weather_data['wind']['speed'] }} m/s</p>
             <p>Dirección del viento: {{ weather_data['wind']['deg'] }}°</p>
@@ -48,6 +76,7 @@
                 <p>No se ha registrado lluvia en la última hora.</p>
             {% endif %}
             <p>Nubes: {{ weather_data['clouds']['all'] }}%</p>
+            <hr>
             <p>Amanecer: {{ sunrise.strftime('%H:%M:%S') }}</p>
             <p>Anochecer: {{ sunset.strftime('%H:%M:%S') }}</p>
         </div>
@@ -66,12 +95,12 @@
             <form method="POST" action="/">
                 <input type="hidden" name="city" value="{{ city_name }}"> <!-- Mantener la ciudad actual -->
                 
-                <label for="hora_inicio">Hora de inicio (HH:MM):</label>
+                <label for="hora_inicio">Hora de inicio de exposición (HH:MM):</label>
                 <input type="time" id="hora_inicio" name="hora_inicio" required>
                 <br>
                 <br>
 
-                <label for="hora_fin">Hora de fin (HH:MM):</label>
+                <label for="hora_fin">Hora de fin de exposición (HH:MM):</label>
                 <input type="time" id="hora_fin" name="hora_fin" required>
                 <br>
                 <br>
@@ -79,11 +108,22 @@
             </form>
     
             {% if dosis_uv %}
+                <hr>
                 <div class="result">
                     <h3>Resultado de la Dosis UV</h3>
-                    <p>Dosis total recibida: {{ dosis_uv }} mJ/cm²</p>
+                    <p></p>Localidad: {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</p>
                     <p>Desde: {{ hora_inicio }}</p>
                     <p>Hasta: {{ hora_fin }}</p>
+                    <div>
+                        <h3>Dosis total recibida: {{ dosis_uv }} mJ/m²</h3>
+                        {% if dosis_uva is not none %}
+                        <ul>
+                            <li>Dosis UVA: {{ dosis_uva }} mJ/m² (90%)</li>
+                            <li>Dosis UVB: {{ dosis_uvb }} mJ/m² (10%)</li>
+                            <li>Dosis UVC: &lt;{{ dosis_uvc }} mJ/m² (&lt;0,1%)</li>
+                        </ul>
+                        {% endif %}
+                    </div>
                 </div>
             {% endif %}
         </div>

@@ -21,16 +21,26 @@ tf = TimezoneFinder()
 
 # Función para obtener coordenadas y zona horaria de una ciudad usando Geocoding
 def get_coordinates(city_name):
-    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=1&appid={API_KEY}'
+    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=5&appid={API_KEY}'  # Cambia limit a 5
     response = requests.get(url)
     data = response.json()
     if response.status_code == 200 and data:
-        lat = data[0]['lat']
-        lon = data[0]['lon']
-        timezone = tf.timezone_at(lat=lat, lng=lon)
-        return lat, lon, timezone, data[0]
+        locations = []
+        for item in data:
+            lat = item['lat']
+            lon = item['lon']
+            timezone = tf.timezone_at(lat=lat, lng=lon)
+            locations.append({
+                'name': item['name'],
+                'state': item.get('state', ''),
+                'country': item['country'],
+                'lat': lat,
+                'lon': lon,
+                'timezone': timezone
+            })
+        return locations  # Devuelve una lista de ubicaciones
     print(f"Error al obtener coordenadas: {response.status_code} {response.text}")
-    return None, None, 'UTC', None
+    return [], None
 
 # Función para obtener los datos de la API del clima
 def get_weather_data(lat, lon):
@@ -80,10 +90,18 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     times_dt = [datetime.fromtimestamp(t, sunrise.tzinfo) for t in timestamps]
 
     plt.figure(figsize=(8, 4))
-    plt.plot(times_dt, uv_values, label="Índice UV")
-    plt.xlabel("Hora del día")
+    
+    # Obtener la fecha actual
+    today = datetime.now(sunrise.tzinfo)
+    formatted_date = today.strftime("%d/%m/%Y")  # Formato de fecha con barras separadoras
+
+    # Modificar el título para incluir la fecha
+    plt.title(f"Índice UV para {formatted_date}")
+    
+    # Cambiar el color de la línea a #FF5722
+    plt.plot(times_dt, uv_values, label="Índice UV", color='#FF5722')
+    plt.xlabel("Hora del día (Hora local)")
     plt.ylabel("Índice UV")
-    plt.title("Índice UV a lo largo del día")
     plt.legend()
     plt.grid()
 
@@ -97,13 +115,51 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     plt.close()
     return img
 
+
+# Modifica la función para obtener coordenadas y zona horaria de una ciudad usando Geocoding
+def get_coordinates(city_name):
+    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=5&appid={API_KEY}'  # Cambia limit a 5
+    response = requests.get(url)
+    data = response.json()
+    if response.status_code == 200 and data:
+        locations = []
+        for item in data:
+            lat = item['lat']
+            lon = item['lon']
+            timezone = tf.timezone_at(lat=lat, lng=lon)
+            locations.append({
+                'name': item['name'],
+                'state': item.get('state', ''),
+                'country': item['country'],
+                'lat': lat,
+                'lon': lon,
+                'timezone': timezone
+            })
+        return locations  # Devuelve una lista de ubicaciones
+    print(f"Error al obtener coordenadas: {response.status_code} {response.text}")
+    return [], None
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     city_name = request.form.get('city') if request.method == 'POST' else 'Madrid'
-    lat, lon, timezone, city_info = get_coordinates(city_name)
+    locations = get_coordinates(city_name)  # Ahora recibimos una lista de ubicaciones
 
-    if lat is None or lon is None:
+    if not locations or not isinstance(locations, list) or len(locations) == 0:
         return render_template('index.html', error="No se pudo encontrar la ciudad. Intenta otra vez.")
+
+    # Solo se tomará la primera ubicación para el clima
+    selected_location = locations[0]
+    
+    # Verificamos la estructura de selected_location
+    if not isinstance(selected_location, dict):
+        return render_template('index.html', error="Error en la estructura de los datos de ubicación.")
+
+    lat = selected_location.get('lat')
+    lon = selected_location.get('lon')
+    timezone = selected_location.get('timezone')
+
+    if lat is None or lon is None or timezone is None:
+        return render_template('index.html', error="No se pudo obtener las coordenadas de la ciudad.")
 
     weather_data = get_weather_data(lat, lon)
     if weather_data is None:
@@ -150,28 +206,45 @@ def index():
         except ValueError as e:
             dosis_uv = f"Formato de hora inválido: {e}"
 
+    if dosis_uv is not None and isinstance(dosis_uv, (int, float)):
+        # Calcular la dosis para cada tipo de radiación
+        dosis_uva = round(dosis_uv * 0.90, 2)  # 90% UVA
+        dosis_uvb = round(dosis_uv * 0.10, 2)  # 9% UVB
+        dosis_uvc = round(dosis_uv * 0.001, 2)  # 0,1% UVC
+    else:
+        dosis_uva = dosis_uvb = dosis_uvc = None
+
+    # Pasar estas dosis a la plantilla
     return render_template(
         'index.html',
         weather_data=weather_data,
         current_uvi=current_uvi,
         uvi_forecast=uvi_forecast,
         uv_plot_url='/uv_plot',
-        city_name=city_name,
+        city_name=selected_location.get('name', 'Desconocida'),
         sunrise=sunrise,
         sunset=sunset,
-        city_info=city_info,
+        city_info=selected_location,
         dosis_uv=dosis_uv,
+        dosis_uva=dosis_uva,
+        dosis_uvb=dosis_uvb,
+        dosis_uvc=dosis_uvc,
         hora_inicio=hora_inicio,
-        hora_fin=hora_fin
+        hora_fin=hora_fin,
+        locations=locations
     )
 
 @app.route('/uv_plot')
 def uv_plot():
     city_name = request.args.get('city', 'Madrid')
-    lat, lon, timezone, city_info = get_coordinates(city_name)
-    if lat is None or lon is None:
-        return None
+    locations = get_coordinates(city_name)  # Obtén la lista de ubicaciones
 
+    if not locations:  # Si no se encontraron ubicaciones, maneja el error
+        return "No se encontraron ubicaciones.", 404
+
+    # Solo usa la primera ubicación para obtener los datos
+    selected_location = locations[0]
+    lat, lon, timezone = selected_location['lat'], selected_location['lon'], selected_location['timezone']
     weather_data = get_weather_data(lat, lon)
     if weather_data is None:
         return None
@@ -192,5 +265,6 @@ def uv_plot():
     uv_plot_img = create_uv_index_plot(sunrise, sunset, peak_uvi)
     return send_file(uv_plot_img, mimetype='image/png')
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='192.168.1.138', port=5000, debug=True)

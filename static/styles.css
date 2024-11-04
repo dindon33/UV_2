@@ -6,6 +6,10 @@ body {
     background-color: #f4f4f4;
 }
 
+p {
+    line-height: 1.6;
+}
+
 /* Estilos para el encabezado */
 header {
     background-color: #FF9800; /* Cambiado a un naranja cálido */
@@ -15,6 +19,35 @@ header {
     border-radius: 8px;
     margin-bottom: 20px;
 }
+
+/* Estilo para la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 8px; /* Bordes redondeados */
+    overflow: hidden; /* Para ocultar el borde redondeado */
+}
+
+/* Estilo para las celdas */
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd; /* Mantener el borde inferior */
+    transition: background-color 0.3s; /* Transición suave para el hover */
+}
+
+/* Estilo para los encabezados */
+th {
+    background-color: #FF9800; /* Cambiado a naranja cálido para armonizar */
+    color: white;
+}
+
+/* Estilo para las filas alternas */
+tr:nth-child(even) {
+    background-color: #f9f9f9; /* Color de fondo claro para filas pares */
+}
+
 
 /* Contenedores */
 .container {
@@ -61,6 +94,11 @@ form input[type="text"] {
 form input[type="text"]:focus {
     border-color: #FF9800; /* Cambiado a un color cálido */
     outline: none;
+}
+
+/* Estilo para el contenedor de información de localidades */
+.locations-info {
+    border-left: 5px solid #FF5722; /* Cambiado a un naranja cálido */
 }
 
 /* Estilo para el contenedor de información del clima */
@@ -127,7 +165,7 @@ footer {
 }
 
 /* Adaptación para dispositivos móviles */
-@media (max-width: 600px) {
+@media (max-width: 900px) {
     body {
         padding: 10px;
     }
@@ -142,5 +180,11 @@ footer {
 
     p {
         font-size: 1em;
+    }
+
+    .uvi-info img {
+        justify-content: center; /* Centra el contenido horizontalmente */
+        width: 100%; /* Asegura que la imagen no supere el ancho del contenedor */
+        height: auto; /* Mantiene la proporción de la imagen */
     }
 }
