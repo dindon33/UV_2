@@ -105,6 +105,10 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     plt.legend()
     plt.grid()
 
+    # Establecer límites del eje Y y ticks
+    plt.ylim(0, 12)  # Limita el eje Y de 0 a 11
+    plt.yticks(np.arange(0, 12, 1))  # Establece los ticks del eje Y de 1 en 1 hasta 11
+
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=sunrise.tzinfo))
     plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
     plt.gcf().autofmt_xdate()
@@ -208,8 +212,8 @@ def index():
 
     if dosis_uv is not None and isinstance(dosis_uv, (int, float)):
         # Calcular la dosis para cada tipo de radiación
-        dosis_uva = round(dosis_uv * 0.90, 2)  # 90% UVA
-        dosis_uvb = round(dosis_uv * 0.10, 2)  # 9% UVB
+        dosis_uva = round(dosis_uv * 0.95, 2)  # 95% UVA
+        dosis_uvb = round(dosis_uv * 0.05, 2)  # 5% UVB
         dosis_uvc = round(dosis_uv * 0.001, 2)  # 0,1% UVC
     else:
         dosis_uva = dosis_uvb = dosis_uvc = None
