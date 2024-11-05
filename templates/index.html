@@ -14,11 +14,13 @@
         </nav>
     </header>
 
-    <form method="POST" action="/">
-        <label for="city">Introduce tu ciudad:</label>
-        <input type="text" id="city" name="city" placeholder="Ciudad, Estado/Región, País" required>
-        <button type="submit" class="btn-submit">Buscar</button>
-    </form>
+    <div class="container location-selector">
+        <form method="POST" action="/">
+            <label for="city">Introduce tu localidad:</label>
+            <input type="text" id="city" name="city" placeholder="Localidad, Región/Estado, País" required>
+            <button type="submit" class="btn-submit">Buscar</button>
+        </form>
+    </div>
 
     {% if error %}
         <div class="container error">
@@ -33,7 +35,7 @@
                 <thead>
                     <tr>
                         <th>Nombre Localidad</th>
-                        <th>Estado/Región</th>
+                        <th>Región/Estado</th>
                         <th>País</th>
                     </tr>
                 </thead>
@@ -52,13 +54,13 @@
 
     {% if weather_data %}
         <div class="container weather-info">
-            <h2>Información para:</h2>
-            <h2>{{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</h2>
+            <h2>Ubicación: {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</h2>
+            <h2>Dia y Hora Local: {{ local_time }}</h2>
+
             <p>Latitud: {{ city_info.lat }}</p>
             <p>Longitud: {{ city_info.lon }}</p>
             <hr>
-            <p>Descripción: {{ weather_data['weather'][0]['description'] }}</p>
-            <p>Icono: <img src="http://openweathermap.org/img/wn/{{ weather_data['weather'][0]['icon'] }}@2x.png" alt="Icono del clima: {{ weather_data['weather'][0]['description'] }}"></p>
+            <p>Descripción: {{ weather_data['weather'][0]['description'] }} <img src="http://openweathermap.org/img/wn/{{ weather_data['weather'][0]['icon'] }}@2x.png" alt="Icono del clima: {{ weather_data['weather'][0]['description'] }}"></p>
             <hr>
             <p>Temperatura: {{ weather_data['main']['temp'] }}°C</p>
             <p>Máxima: {{ weather_data['main']['temp_max'] }}°C</p>
@@ -86,8 +88,8 @@
 
     {% if current_uvi %}
         <div class="container uvi-info">
-            <h2>Índice UV Actual</h2>
-            <p>Valor: {{ current_uvi['value'] }}</p>
+            <h2>Índice UV Diario</h2>
+            <p>Valor UV hoy: {{ current_uvi['value'] }}</p>
             <img src="{{ uv_plot_url }}?city={{ city_name }}" alt="Gráfica de Índice UV para {{ city_name }}">
         </div>
         <div class="container uv-calculator">
@@ -115,12 +117,12 @@
                     <p>Desde: {{ hora_inicio }}</p>
                     <p>Hasta: {{ hora_fin }}</p>
                     <div>
-                        <h3>Dosis total recibida: {{ dosis_uv }} mJ/m²</h3>
+                        <h3>Dosis UV total recibida: {{ dosis_uv }} J/cm²</h3>
                         {% if dosis_uva is not none %}
                         <ul>
-                            <li>Dosis UVA: {{ dosis_uva }} mJ/m² (95%)</li>
-                            <li>Dosis UVB: {{ dosis_uvb }} mJ/m² (5%)</li>
-                            <li>Dosis UVC: &lt;{{ dosis_uvc }} mJ/m² (&lt;0,1%)</li>
+                            <li>Dosis UVA: {{ dosis_uva }} J/cm² (95%)</li>
+                            <li>Dosis UVB: {{ dosis_uvb }} J/cm² (5%)</li>
+                            <li>Dosis UVC: &lt;{{ dosis_uvc }} J/cm² (&lt;0,1%)</li>
                         </ul>
                         {% endif %}
                     </div>
@@ -145,7 +147,8 @@
     {% endif %}
 
     <footer>
-        <p>Datos proporcionados por OpenWeatherMap. Desarrollado por WEQREA.</p>
+        <p>Datos proporcionados por OpenWeatherMap.</p> 
+        <p>Desarrollado por WEQREA &copy;.</p>
     </footer>
 </body>
 </html>

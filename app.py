@@ -106,8 +106,8 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     plt.grid()
 
     # Establecer límites del eje Y y ticks
-    plt.ylim(0, 12)  # Limita el eje Y de 0 a 11
-    plt.yticks(np.arange(0, 12, 1))  # Establece los ticks del eje Y de 1 en 1 hasta 11
+    plt.ylim(0, peak_uvi+1)  # Limita el eje Y de 0 a 11
+    plt.yticks(np.arange(0, peak_uvi+1, 1))  # Establece los ticks del eje Y de 1 en 1 hasta 11
 
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=sunrise.tzinfo))
     plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
@@ -119,37 +119,13 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     plt.close()
     return img
 
-
-# Modifica la función para obtener coordenadas y zona horaria de una ciudad usando Geocoding
-def get_coordinates(city_name):
-    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=5&appid={API_KEY}'  # Cambia limit a 5
-    response = requests.get(url)
-    data = response.json()
-    if response.status_code == 200 and data:
-        locations = []
-        for item in data:
-            lat = item['lat']
-            lon = item['lon']
-            timezone = tf.timezone_at(lat=lat, lng=lon)
-            locations.append({
-                'name': item['name'],
-                'state': item.get('state', ''),
-                'country': item['country'],
-                'lat': lat,
-                'lon': lon,
-                'timezone': timezone
-            })
-        return locations  # Devuelve una lista de ubicaciones
-    print(f"Error al obtener coordenadas: {response.status_code} {response.text}")
-    return [], None
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     city_name = request.form.get('city') if request.method == 'POST' else 'Madrid'
     locations = get_coordinates(city_name)  # Ahora recibimos una lista de ubicaciones
 
     if not locations or not isinstance(locations, list) or len(locations) == 0:
-        return render_template('index.html', error="No se pudo encontrar la ciudad. Intenta otra vez.")
+        return render_template('index.html', error="No se pudo encontrar la localidad. Intenta otra vez.")
 
     # Solo se tomará la primera ubicación para el clima
     selected_location = locations[0]
@@ -163,7 +139,11 @@ def index():
     timezone = selected_location.get('timezone')
 
     if lat is None or lon is None or timezone is None:
-        return render_template('index.html', error="No se pudo obtener las coordenadas de la ciudad.")
+        return render_template('index.html', error="No se pudo obtener las coordenadas de la localidad.")
+
+    # Obtener la hora local
+    local_time = datetime.now(pytz.timezone(timezone))
+    formatted_local_time = local_time.strftime("%d/%m/%Y - %H:%M")  # Formato: Día, DD de Mes YYYY, HH:MM
 
     weather_data = get_weather_data(lat, lon)
     if weather_data is None:
@@ -203,7 +183,7 @@ def index():
                 uv_values = peak_uvi * np.exp(-0.5 * ((timestamps - midday_timestamp) / std_dev) ** 2)
                 total_uv_dosis = np.trapz(uv_values, timestamps)
 
-                dosis_uv = round(total_uv_dosis, 2)
+                dosis_uv = round(total_uv_dosis/1000, 2) #Pasar de mJ/cm2 a J/cm2
             else:
                 dosis_uv = "Las horas deben estar entre el amanecer y el anochecer, y la hora de inicio debe ser anterior a la de fin."
 
@@ -235,7 +215,8 @@ def index():
         dosis_uvc=dosis_uvc,
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
-        locations=locations
+        locations=locations,
+        local_time=formatted_local_time  # Añadir la hora local
     )
 
 @app.route('/uv_plot')
@@ -271,4 +252,4 @@ def uv_plot():
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.1.138', port=5000, debug=True)
+    app.run(host='0.0.0.0', debug=False)

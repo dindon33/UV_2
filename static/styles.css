@@ -54,7 +54,7 @@ tr:nth-child(even) {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 20px 0;
+    margin: 20px 250px;
     padding: 20px;
     transition: box-shadow 0.3s, transform 0.3s;
 }
@@ -96,6 +96,24 @@ form input[type="text"]:focus {
     outline: none;
 }
 
+/* Estilos generales para input de tipo "time" en la versión estándar */
+input[type="time"] {
+    width: 350px; /* O un valor específico, como 250px */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+/* Estilo cuando el campo está en foco */
+input[type="time"]:focus {
+    border-color: #FF9800; /* Cambiado a un color cálido */
+    outline: none;
+}
+
 /* Estilo para el contenedor de información de localidades */
 .locations-info {
     border-left: 5px solid #FF5722; /* Cambiado a un naranja cálido */
@@ -109,6 +127,12 @@ form input[type="text"]:focus {
 /* Estilo para el contenedor de índice UV */
 .uvi-info {
     border-left: 5px solid #FF5722; /* Cambiado a un rojo suave */
+}
+
+.uvi-info img {
+    display: block; /* Asegúrate de que la imagen se comporte como un bloque */
+    margin: 0 auto; /* Centramos la imagen */
+    height: auto; /* Mantiene la proporción */
 }
 
 /* Estilo para el contenedor de pronóstico UV */
@@ -171,7 +195,8 @@ footer {
     }
 
     .container {
-        padding: 15px;
+        padding: 15px !important;
+        margin: 20px 0 !important;
     }
 
     h1, h2 {
@@ -186,5 +211,16 @@ footer {
         justify-content: center; /* Centra el contenido horizontalmente */
         width: 100%; /* Asegura que la imagen no supere el ancho del contenedor */
         height: auto; /* Mantiene la proporción de la imagen */
+    }
+
+    /* Hacer que los campos de tipo "time" ocupen todo el ancho */
+    input[type="time"] {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+        font-size: 1em;
+        box-sizing: border-box;
     }
 }
