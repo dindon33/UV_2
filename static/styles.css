@@ -12,7 +12,7 @@ p {
 
 /* Estilos para el encabezado */
 header {
-    background-color: #FF9800; /* Cambiado a un naranja cálido */
+    background: linear-gradient(to right, #51B82D, #F9F102, #F0A100, #DF0024, #C677AA);
     color: white;
     text-align: center;
     padding: 10px 0;
