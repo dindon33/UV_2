@@ -10,7 +10,7 @@
 <body>
     <header>
         <nav>
-            <h1>Clima y Pronóstico UV</h1>
+            <h1>CLIMA - ÍNDICE UV - DOSIS UV</h1>
         </nav>
     </header>
 
@@ -55,7 +55,7 @@
     {% if weather_data %}
         <div class="container weather-info">
             <h2>Ubicación: {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</h2>
-            <h2>Dia y Hora Local: {{ local_time }}</h2>
+            <h2>Fecha y Hora Local: {{ local_time }}</h2>
 
             <p>Latitud: {{ city_info.lat }}</p>
             <p>Longitud: {{ city_info.lon }}</p>
@@ -90,6 +90,9 @@
         <div class="container uvi-info">
             <h2>Índice UV Diario</h2>
             <p>Valor UV hoy: {{ current_uvi['value'] }}</p>
+            <div style="background-color: {{ risk_color | default('#FFFFFF') }}; font-weight: bold; padding: 5px; border-radius: 5px; color: black;">
+                <p>Riesgo: {{ risk_level | default('Desconocido') }}</p>
+            </div>
             <img src="{{ uv_plot_url }}?city={{ city_name }}" alt="Gráfica de Índice UV para {{ city_name }}">
         </div>
         <div class="container uv-calculator">
@@ -113,7 +116,8 @@
                 <hr>
                 <div class="result">
                     <h3>Resultado de la Dosis UV</h3>
-                    <p></p>Localidad: {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</p>
+                    <p>Localidad: {{ city_info.name }}, {{ city_info.state }}, {{ city_info.country }}</p>
+                    <p>Fecha: {{ local_date }}</p>
                     <p>Desde: {{ hora_inicio }}</p>
                     <p>Hasta: {{ hora_fin }}</p>
                     <div>
@@ -148,7 +152,7 @@
 
     <footer>
         <p>Datos proporcionados por OpenWeatherMap.</p> 
-        <p>Desarrollado por WEQREA &copy;.</p>
+        <p>Desarrollado por M4T4M0R0S &copy;.</p>
     </footer>
 </body>
 </html>

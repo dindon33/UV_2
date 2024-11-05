@@ -79,8 +79,23 @@ def convert_to_local_time(timestamp, timezone):
         local_tz = pytz.utc  # Fallback a UTC si la zona horaria no es válida
     return utc_time.astimezone(local_tz)
 
+# Función para determinar el riesgo según el índice UV
+def get_uv_risk(uvi):
+    if uvi is None:
+        return "No disponible", "#000000"  # Si no hay índice UV disponible
+    if uvi <= 2:
+        return "Bajo", "#51B82D"
+    elif uvi <= 5:
+        return "Moderado", "#F9F102"
+    elif uvi <= 7:
+        return "Alto", "#F0A100"
+    elif uvi <= 10:
+        return "Muy alto", "#DF0024"
+    else:
+        return "Extremadamente alto", "#C677AA"
+
 # Función para generar la gráfica de UV
-def create_uv_index_plot(sunrise, sunset, peak_uvi):
+def create_uv_index_plot(sunrise, sunset, peak_uvi, risk_color):
     midday_timestamp = (sunrise.timestamp() + sunset.timestamp()) / 2
     midday = datetime.fromtimestamp(midday_timestamp, sunrise.tzinfo)
 
@@ -90,16 +105,16 @@ def create_uv_index_plot(sunrise, sunset, peak_uvi):
     times_dt = [datetime.fromtimestamp(t, sunrise.tzinfo) for t in timestamps]
 
     plt.figure(figsize=(8, 4))
-    
+
     # Obtener la fecha actual
     today = datetime.now(sunrise.tzinfo)
     formatted_date = today.strftime("%d/%m/%Y")  # Formato de fecha con barras separadoras
 
     # Modificar el título para incluir la fecha
     plt.title(f"Índice UV para {formatted_date}")
-    
-    # Cambiar el color de la línea a #FF5722
-    plt.plot(times_dt, uv_values, label="Índice UV", color='#FF5722')
+
+    # Cambiar el color de la línea a risk_color
+    plt.plot(times_dt, uv_values, label="Índice UV", color=risk_color)
     plt.xlabel("Hora del día (Hora local)")
     plt.ylabel("Índice UV")
     plt.legend()
@@ -144,6 +159,7 @@ def index():
     # Obtener la hora local
     local_time = datetime.now(pytz.timezone(timezone))
     formatted_local_time = local_time.strftime("%d/%m/%Y - %H:%M")  # Formato: Día, DD de Mes YYYY, HH:MM
+    formatted_local_date = local_time.strftime("%d/%m/%Y")  # Formato: Día, DD de Mes YYYY
 
     weather_data = get_weather_data(lat, lon)
     if weather_data is None:
@@ -159,7 +175,8 @@ def index():
         return render_template('index.html', error="Error al obtener información de amanecer/anochecer: " + str(e))
 
     peak_uvi = current_uvi['value'] if current_uvi else 0
-    uv_plot = create_uv_index_plot(sunrise, sunset, peak_uvi)
+    risk_level, risk_color = get_uv_risk(peak_uvi)
+    uv_plot = create_uv_index_plot(sunrise, sunset, peak_uvi, risk_color)
 
     dosis_uv = None
     hora_inicio = request.form.get('hora_inicio')
@@ -216,7 +233,10 @@ def index():
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         locations=locations,
-        local_time=formatted_local_time  # Añadir la hora local
+        local_time=formatted_local_time,  # Añadir la hora local
+        local_date=formatted_local_date,  # Añadir la fecha local
+        risk_level=risk_level,  # Añadir nivel de riesgo
+        risk_color=risk_color    # Añadir color de riesgo
     )
 
 @app.route('/uv_plot')
@@ -247,9 +267,13 @@ def uv_plot():
 
     peak_uvi = current_uvi['value'] if current_uvi else 0
 
-    uv_plot_img = create_uv_index_plot(sunrise, sunset, peak_uvi)
+    # Aquí es donde obtienes el nivel de riesgo y el color
+    risk_level, risk_color = get_uv_risk(peak_uvi)
+
+    # Ahora pasa el risk_color a create_uv_index_plot
+    uv_plot_img = create_uv_index_plot(sunrise, sunset, peak_uvi, risk_color)
     return send_file(uv_plot_img, mimetype='image/png')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host='127.0.0.1', port=5000, debug=True)
